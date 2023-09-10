@@ -39,15 +39,16 @@ class Signals(QObject):
 
 
 class WorkerThread(QRunnable):
-    def __init__(self, url, name):  #, ui_obj
+    def __init__(self, url):  #, ui_obj
         super().__init__()
-        self.progress_bar_name = name
-        self.thred_name = name
+        # self.progress_bar_name = name
+        # self.thred_name = name
+        self.url = url
         self.signals = Signals()
         self.is_running = True
 
     def run(self):
-        data_work = [self.progress_bar_name, 0, "w"]
+        data_work = [self.url, 0, "этапы"]
         i = 0
         while True:
         # while self.is_running == True:
@@ -67,6 +68,10 @@ class WorkerThread(QRunnable):
             except:
                 pass
         # print(self.thred_name)
+
+    def transfer_url(self, url):
+        self.url = url
+
 
     def stop(self):
         # self.is_running = False
@@ -108,24 +113,31 @@ class MainWindow(QMainWindow):
         self.ui.btn_start.setToolTip("Нехуй сюда тыкать по 100 раз.\n Не видишь работаю")
 
         self.threadpool = QThreadPool.globalInstance()
-        self.threadpool.setMaxThreadCount(3)
-        self.running_threads = self.threadpool.activeThreadCount()
-        # while True:
-        for url in self.url_list[0:3]:
-            self.name = url.split('/')[-1].replace('.', '_')
-            self.progress_bar = ProgressBar()
-            self.progress_bar.setObjectName(self.name)
-            self.ui.verticalLayout_scroll_area.addWidget(self.progress_bar)
-            logging.info(f"создан progress_bar {self.name}")
-            self.thread_parser = WorkerThread(url, self.name)  #, self.ui
-            self.threadpool.start(self.thread_parser)
-            # logging.info(f"запущен поток {self.name}")
-            # print("Количество работающих потоков в for:", self.running_threads)
-            self.thread_parser.signals.signal_progress_update.connect(self.update_progress)
-            self.thread_parser.signals.signal_stop.connect(self.stop_thred)
-            self.running_threads = self.threadpool.activeThreadCount()
-            # logging.info(f"количество потоков в for {self.running_threads}")
-            self.url_list.remove(url)
+        self.Max_Thread_Count = 3
+        self.threadpool.setMaxThreadCount(self.Max_Thread_Count)
+        self.threads = []
+        self.progress_bars = []
+        self.what_to_do = "create"
+        self.i = 0
+        while True:
+            if self.what_to_do == "create":  # создать прогресс бар и поток
+                self.url = self.url_list[self.i]
+                self.progress_bar = ProgressBar()
+                self.ui.verticalLayout_scroll_area.addWidget(self.progress_bar)
+                self.progress_bars.append(self.progress_bar)
+                logging.info(f"создан progress_bar {len(self.progress_bars)}")
+                self.thread_parser = WorkerThread(url)  # , self.ui
+                self.threadpool.start(self.thread_parser)
+                self.threads.append(self.threads)
+                logging.info(f"создан поток {len(self.threads)}")
+                if len(self.threads) == self.Max_Thread_Count:
+                    self.what_to_do = "listen_to_streams"
+            elif self.what_to_do == "transfer_to_existing":  # передать ссылку в существующий поток
+                self.threads[self.index].transfer_url(self.url)
+            elif self.what_to_do == "listen_to_streams":  # слушать потоки
+                pass
+
+
         self.ui.btn_start.setEnabled(True)
 
     @Slot()
