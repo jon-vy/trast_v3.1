@@ -1,8 +1,20 @@
 from PySide6.QtWidgets import QDialog, QFileDialog
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 import json
-import time
+
 import sqlite3
+import logging
+
+logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+        # datefmt="%Y-%m-%d %H:%M:%S",
+        filename="basic.log",
+        filemode="w", # чистит файл при каждом запуске
+        encoding="utf-8"  # чтоб по русски писало
+    )
+# logging.info(f"progress_bar удалён {name}")  Это вставить в нужное место
 
 from ui.base_ui.ui_window_dialog_setting import Ui_WindowDialogSetting
 from connect_db import db_connect
@@ -17,7 +29,28 @@ class WindowDialogSetting(QDialog):
         '''если что есть, то заполняю таблицу в интерфейсе'''
         self.connect_sqlite3 = sqlite3.connect('database.db')
         self.cursor_sqlite3 = self.connect_sqlite3.cursor()
+        logging.info(f"База есть")
+
+        self.cursor_sqlite3.execute('''CREATE TABLE IF NOT EXISTS date_users 
+                            (
+                                id INTEGER PRIMARY KEY, 
+                                host VARCHAR, 
+                                port INTEGER, 
+                                user TEXT, 
+                                db_password TEXT, 
+                                db_name TEXT,
+                                count_threds INTEGER,
+                                path_to_file_links TEXT
+                            )'''
+                                    )
+        query = "UPDATE date_users SET host = ? WHERE id = ?"
+        values = ("localhost", 1)
+        self.cursor_sqlite3.execute(query, values)
+        self.connect_sqlite3.commit()
+
         self.cursor_sqlite3.execute("SELECT * FROM date_users WHERE id = 1")
+        logging.info(f"Таблицы нет")
+
         self.rows = self.cursor_sqlite3.fetchall()
         if len(self.rows) > 0:
             self.host = self.rows[0][1]
@@ -46,7 +79,7 @@ class WindowDialogSetting(QDialog):
         self.ui.lineEdit_db_user.setText(self.user)
         self.ui.lineEdit_db_password.setText(self.db_password)
         self.ui.lineEdit_db_name.setText(self.db_name)
-        self.ui.tredsSpinBox.setValue(self.count_threds)
+        self.ui.tredsSpinBox.setValue(int(self.count_threds))
         self.ui.lineEdit_find_file.setText(self.path_to_file_links)
 
         self.chek_connect_db()
