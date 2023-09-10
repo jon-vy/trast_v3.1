@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
                 # self.index += 1
 
 
-            # self.thread = 0
+
             # self.thread = 0
             # self.name = url.split('/')[-1].replace('.', '_')
 
