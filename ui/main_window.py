@@ -4,7 +4,7 @@ import sqlite3
 
 import ui.progress_bar
 from PySide6.QtWidgets import QMainWindow, QDialog, QProgressBar, QToolTip, QWidget, QApplication
-from PySide6.QtCore import Slot, Signal, QObject, QThread, QRunnable, QThreadPool, QTime, QElapsedTimer
+from PySide6.QtCore import Slot, Signal, QObject, QThread, QRunnable, QThreadPool, QTime
 import time
 import sys
 import random
@@ -30,6 +30,13 @@ from parser import *
 # from data.variables import *
 
 
+with open('data/trustpilot.txt', 'r', encoding='utf-8') as f_read:
+    url_list = f_read.read().split('\n')
+if len(url_list) > 0:
+    pass
+else:
+    print("ссылки закончились")
+
 class Signals(QObject):
     signal_started = Signal(int)
     signal_stop = Signal(str)
@@ -39,56 +46,33 @@ class Signals(QObject):
 
 
 class WorkerThread(QRunnable):
-    def __init__(self, url):  #, ui_obj
+    def __init__(self, index_thred):
         super().__init__()
-        # self.progress_bar_name = name
-        # self.thred_name = name
-        self.url = url
+        self.index_thred = index_thred
         self.signals = Signals()
-        self.is_running = True
 
     def run(self):
-        data_work = [self.url, 0, "этапы"]
-        i = 0
-        while True:
-        # while self.is_running == True:
-            i+=1
-            if i == 100:
-                # Дать сигнал на удаление self.progress_bar и остановку потока
-                self.signals.signal_stop.emit(self.thred_name)
-                # QThreadPool.globalInstance().releaseThread()
-            try:
-                for stage in range(1, 4):
-                    data_work[1] = i
-                    data_work[2] = f"этап {stage}"
-                    self.signals.signal_progress_update.emit(data_work)
-                    delay = QTime(0, 0).msecsTo(QTime.currentTime())
-                    delay = abs(delay) % 10  # Ограничиваем задержку до 10 миллисекунд
-                    time.sleep(delay / 1000)  # Преобразуем задержку в секунды
-            except:
-                pass
-        # print(self.thred_name)
-
-    def transfer_url(self, url):
-        self.url = url
-
-
-    def stop(self):
-        # self.is_running = False
-        QThreadPool.globalInstance().releaseThread()
-
+        for url in url_list:
+            url_list.remove(url)
+            data_work = [self.index_thred, url, 0, "этап"]
+            for i in range(100):
+                if i == 100:
+                    break
+                else:
+                    for stage in range(1, 4):
+                        data_work[2] = i
+                        data_work[3] = f"этап {stage}"
+                        self.signals.signal_progress_update.emit(data_work)
+                        delay = QTime(0, 0).msecsTo(QTime.currentTime())
+                        delay = abs(delay) % 10  # Ограничиваем задержку до 10 миллисекунд
+                        time.sleep(delay / 1000)  # Преобразуем задержку в секунды
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        with open('data/trustpilot.txt', 'r', encoding='utf-8') as f_read:
-            self.url_list = f_read.read().split('\n')
-        if len(self.url_list) > 0:
-            pass
-        else:
-            print("ссылки закончились")
+
 
         try:
             self.connect_sqlite3 = sqlite3.connect('database.db')
@@ -115,50 +99,31 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool.globalInstance()
         self.Max_Thread_Count = 3
         self.threadpool.setMaxThreadCount(self.Max_Thread_Count)
-        self.threads = []
         self.progress_bars = []
-        self.what_to_do = "create"
-        self.i = 0
-        while True:
-            if self.what_to_do == "create":  # создать прогресс бар и поток
-                self.url = self.url_list[self.i]
-                self.progress_bar = ProgressBar()
-                self.ui.verticalLayout_scroll_area.addWidget(self.progress_bar)
-                self.progress_bars.append(self.progress_bar)
-                logging.info(f"создан progress_bar {len(self.progress_bars)}")
-                self.thread_parser = WorkerThread(url)  # , self.ui
-                self.threadpool.start(self.thread_parser)
-                self.threads.append(self.threads)
-                logging.info(f"создан поток {len(self.threads)}")
-                if len(self.threads) == self.Max_Thread_Count:
-                    self.what_to_do = "listen_to_streams"
-            elif self.what_to_do == "transfer_to_existing":  # передать ссылку в существующий поток
-                self.threads[self.index].transfer_url(self.url)
-            elif self.what_to_do == "listen_to_streams":  # слушать потоки
-                pass
-
-
+        self.threads = []
+        i = 0
+        while i < 3:
+            i+=1
+            self.progress_bar = ProgressBar()
+            self.ui.verticalLayout_scroll_area.addWidget(self.progress_bar)
+            self.progress_bars.append(self.progress_bar)
+            self.index_thred = len(self.progress_bars)
+            self.thread_parser = WorkerThread(self.index_thred - 1)
+            self.threadpool.start(self.thread_parser)
+            self.threads.append(self.thread_parser)
+            logging.info(f"запущен поток {self.index_thred}")
+            self.thread_parser.signals.signal_progress_update.connect(self.update_progress)
         self.ui.btn_start.setEnabled(True)
 
     @Slot()
-    def stop_thred(self, name):
-        self.progress_bar = self.findChild(QWidget, name)
-        self.progress_bar.deleteLater()
-        self.thread_parser.stop()
-        # print(f"поток остановлен {name}")
-        logging.info(f"поток остановлен {name}")
-        # self.thread_parser.quit()
-
-
-    @Slot()
-    def update_progress(self, update):
-        self.name = update[0]
+    def update_progress(self, update):  # data_work = [self.index_thred, url, 0, "этап"]
+        self.index_thred = update[0]
         # logging.info(f"получил обновление для {self.name}")
-        self.widget_progress_bar = self.findChild(QWidget, self.name)
+        self.widget_progress_bar = self.progress_bars[self.index_thred]
         if self.widget_progress_bar != None:
-            self.widget_progress_bar.ui.progressBar.setValue(update[1])
-            self.widget_progress_bar.ui.groupBox.setTitle(update[0])
-            self.widget_progress_bar.ui.label_action.setText(update[2])  # Что делаем
+            self.widget_progress_bar.ui.groupBox.setTitle(update[1])
+            self.widget_progress_bar.ui.progressBar.setValue(update[2])
+            self.widget_progress_bar.ui.label_action.setText(update[3])  # Что делаем
         else:
             pass
 
