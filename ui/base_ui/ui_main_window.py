@@ -109,20 +109,20 @@ class Ui_MainWindow(object):
         self.groupBox_5.setSizePolicy(sizePolicy1)
         self.verticalLayout_2 = QVBoxLayout(self.groupBox_5)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.label_4 = QLabel(self.groupBox_5)
-        self.label_4.setObjectName(u"label_4")
+        self.label_links_processed = QLabel(self.groupBox_5)
+        self.label_links_processed.setObjectName(u"label_links_processed")
 
-        self.verticalLayout_2.addWidget(self.label_4)
+        self.verticalLayout_2.addWidget(self.label_links_processed)
 
-        self.label_3 = QLabel(self.groupBox_5)
-        self.label_3.setObjectName(u"label_3")
+        self.label_published = QLabel(self.groupBox_5)
+        self.label_published.setObjectName(u"label_published")
 
-        self.verticalLayout_2.addWidget(self.label_3)
+        self.verticalLayout_2.addWidget(self.label_published)
 
-        self.label_5 = QLabel(self.groupBox_5)
-        self.label_5.setObjectName(u"label_5")
+        self.label_link_defect = QLabel(self.groupBox_5)
+        self.label_link_defect.setObjectName(u"label_link_defect")
 
-        self.verticalLayout_2.addWidget(self.label_5)
+        self.verticalLayout_2.addWidget(self.label_link_defect)
 
 
         self.horizontalLayout_3.addWidget(self.groupBox_5)
@@ -142,12 +142,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_scroll_area = QVBoxLayout()
         self.verticalLayout_scroll_area.setObjectName(u"verticalLayout_scroll_area")
         self.verticalLayout_scroll_area.setSizeConstraint(QLayout.SetNoConstraint)
-        self.verticalLayout_5 = QVBoxLayout()
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.verticalLayout_5.setSizeConstraint(QLayout.SetNoConstraint)
-
-        self.verticalLayout_scroll_area.addLayout(self.verticalLayout_5)
-
 
         self.verticalLayout_3.addLayout(self.verticalLayout_scroll_area)
 
@@ -185,9 +179,9 @@ class Ui_MainWindow(object):
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u043c\u043e\u0435 \u0447\u0438\u0441\u043b\u043e \u043f\u043e\u0442\u043e\u043a\u043e\u0432: 0000", None))
         self.btn_stop.setText(QCoreApplication.translate("MainWindow", u"\u041e\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u0432\u0441\u0451", None))
         self.groupBox_5.setTitle("")
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0441\u044b\u043b\u043e\u043a \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043e: 0000", None))
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"\u041e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e: 0000", None))
-        self.label_5.setText(QCoreApplication.translate("MainWindow", u"\u041d\u0435 \u043f\u043e\u0434\u0445\u043e\u0434\u044f\u0442\u044c \u043f\u043e \u0443\u0441\u043b\u043e\u0432\u0438\u044f\u043c: 000", None))
+        self.label_links_processed.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0441\u044b\u043b\u043e\u043a \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043e: 0000", None))
+        self.label_published.setText(QCoreApplication.translate("MainWindow", u"\u041e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e: 0000", None))
+        self.label_link_defect.setText(QCoreApplication.translate("MainWindow", u"\u041d\u0435 \u043f\u043e\u0434\u0445\u043e\u0434\u044f\u0442\u044c \u043f\u043e \u0443\u0441\u043b\u043e\u0432\u0438\u044f\u043c: 000", None))
         self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
     # retranslateUi
 
