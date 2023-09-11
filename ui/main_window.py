@@ -1,10 +1,11 @@
 import asyncio
 import data.variables
 import sqlite3
-
+# TODO: убрать лишние импорты
 import ui.progress_bar
 from PySide6.QtWidgets import QMainWindow, QDialog, QProgressBar, QToolTip, QWidget, QApplication
 from PySide6.QtCore import Slot, Signal, QObject, QThread, QRunnable, QThreadPool, QTime
+from PySide6.QtGui import QScreen
 import time
 import sys
 import random
@@ -38,6 +39,7 @@ else:
     print("ссылки закончились")
 
 class Signals(QObject):
+    # TODO: убрать лишнее из сигналов
     signal_started = Signal(int)
     signal_stop = Signal(str)
     create_progress_bar = Signal(object)
@@ -52,6 +54,8 @@ class WorkerThread(QRunnable):
         self.signals = Signals()
 
     def run(self):
+        # TODO: Сделать остановку потока
+        # TODO: Прикрутить сюда парсер
         for url in url_list:
             url_list.remove(url)
             data_work = [self.index_thred, url, 0, "этап"]
@@ -72,6 +76,8 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.threadpool = QThreadPool.globalInstance()
+
 
 
         try:
@@ -81,30 +87,48 @@ class MainWindow(QMainWindow):
             self.quantity_ProgressBar = self.cursor_sqlite3.fetchone()[0]
             self.cursor_sqlite3.close()
             self.connect_sqlite3.close()
+            # FIXME: исправить total_streams не существует
             self.ui.total_streams.setText(str(self.quantity_ProgressBar))
         except:
             pass
 
+        self.screen = self.screen()
+        self.Max_Thread_Count = 5  # TODO: максимальное число брать из базы
+        self.threadpool.setMaxThreadCount(self.Max_Thread_Count)
+
+        self.height_window = self.height() + (self.Max_Thread_Count * 70)  # получить высоту под все виджеты
+        logging.info(f"нужна высота окна до проверки {self.height_window}")
+
+        self.screen_height = self.screen.geometry().height()  # высота монитора
+        logging.info(f"высота монитора {self.screen_height}")
+
+        if self.height_window < self.screen_height:
+            pass
+        else:
+            self.height_window = self.screen_height - 100
+        logging.info(f"высота окна после проверки {self.height_window}")
+        self.resize(self.width(), self.height_window)  # установить высоту окна
+
         # привязать к кнопкам слоты
+        # TODO: сделать кнопку стоп всем потокам
         self.ui.btn_start.clicked.connect(self.start_jobs)
         self.ui.action_help.triggered.connect(self.show_help_window)
         self.ui.action_setting.triggered.connect(self.show_window_dialog_setting)
-
-
 
     def start_jobs(self):
         self.ui.btn_start.setEnabled(False)
         self.ui.btn_start.setToolTip("Нехуй сюда тыкать по 100 раз.\n Не видишь работаю")
 
-        self.threadpool = QThreadPool.globalInstance()
-        self.Max_Thread_Count = 3
-        self.threadpool.setMaxThreadCount(self.Max_Thread_Count)
+
+
         self.progress_bars = []
         self.threads = []
+        # TODO: исправить
         i = 0
-        while i < 3:
+        while i < self.Max_Thread_Count:
             i+=1
             self.progress_bar = ProgressBar()
+            # self.ui.verticalLayout_5.addWidget(self.progress_bar)
             self.ui.verticalLayout_scroll_area.addWidget(self.progress_bar)
             self.progress_bars.append(self.progress_bar)
             self.index_thred = len(self.progress_bars)
@@ -113,6 +137,7 @@ class MainWindow(QMainWindow):
             self.threads.append(self.thread_parser)
             logging.info(f"запущен поток {self.index_thred}")
             self.thread_parser.signals.signal_progress_update.connect(self.update_progress)
+            # TODO: слушать стоп
         self.ui.btn_start.setEnabled(True)
 
     @Slot()
@@ -127,13 +152,6 @@ class MainWindow(QMainWindow):
         else:
             pass
 
-    # @Slot()
-    # def Create_Progress_Bar(self, progress_bar_object):
-    #     self.p_r = progress_bar_object
-    #     print(f"что получил {self.p_r}")
-    #     self.ui.verticalLayout_scroll_area.addWidget(self.p_r)
-
-
     @Slot()
     def show_help_window(self):
         self.help_win = QDialog()
@@ -146,4 +164,7 @@ class MainWindow(QMainWindow):
         # self.win_dialog_setting = QDialog()
         self.window_dialog_setting = WindowDialogSetting()
         self.window_dialog_setting.show()
+
+    # TODO: сделать диалоговое окно которое будет отображать ошибки
+    # TODO: без пароля при каждом нажатии на старт делает одну ссылку
 
