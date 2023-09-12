@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QDialog, QFileDialog
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal, QObject
 import json
 
 import sqlite3
@@ -19,11 +19,15 @@ logging.basicConfig(
 from ui.base_ui.ui_window_dialog_setting import Ui_WindowDialogSetting
 from connect_db import db_connect
 
+class Signals(QObject):
+    signal_emit_count_thred = Signal(int)
+
 class WindowDialogSetting(QDialog):
     def __init__(self):
         super(WindowDialogSetting, self).__init__()
         self.ui = Ui_WindowDialogSetting()
         self.ui.setupUi(self)
+        self.signals = Signals()
 
         # <editor-fold desc="Пробую читать первую строку в базе database из таблицы date_users">
         '''если что есть, то заполняю таблицу в интерфейсе'''
@@ -106,6 +110,8 @@ class WindowDialogSetting(QDialog):
         self.connect_sqlite3.commit()
         self.cursor_sqlite3.close()
         self.connect_sqlite3.close()
+        self.signals.signal_emit_count_thred.emit(int(self.ui.tredsSpinBox.text()))
+
 
     def chek_connect_db(self):
         db_connect_data = {

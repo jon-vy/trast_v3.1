@@ -76,6 +76,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
         self.threadpool = QThreadPool.globalInstance()
 
 
@@ -87,14 +88,15 @@ class MainWindow(QMainWindow):
             self.quantity_ProgressBar = self.cursor_sqlite3.fetchone()[0]
             self.cursor_sqlite3.close()
             self.connect_sqlite3.close()
-            # FIXME: исправить total_streams не существует
-            self.ui.total_streams.setText(str(self.quantity_ProgressBar))
+            self.ui.label_total_streams.setText(f"Всего потоков: {self.quantity_ProgressBar}")
         except:
             pass
 
         self.screen = self.screen()
-        self.Max_Thread_Count = 5  # TODO: максимальное число брать из базы
+        self.Max_Thread_Count = self.threadpool.maxThreadCount()
         self.threadpool.setMaxThreadCount(self.Max_Thread_Count)
+
+        self.ui.label_recommended_streams.setText(f"Рекомендуемое число потоков: {self.Max_Thread_Count}")
 
         self.height_window = self.height() + (self.Max_Thread_Count * 70)  # получить высоту под все виджеты
         logging.info(f"нужна высота окна до проверки {self.height_window}")
@@ -164,6 +166,14 @@ class MainWindow(QMainWindow):
         # self.win_dialog_setting = QDialog()
         self.window_dialog_setting = WindowDialogSetting()
         self.window_dialog_setting.show()
+        self.window_dialog_setting.signals.signal_emit_count_thred.connect(self.set_total_streams)
+
+    @Slot()
+    def set_total_streams(self, total_streams):
+        self.total_streams = total_streams
+        self.ui.label_total_streams.setText(f"Всего потоков: {self.total_streams}")
+
+
 
     # TODO: сделать диалоговое окно которое будет отображать ошибки
     # TODO: без пароля при каждом нажатии на старт делает одну ссылку

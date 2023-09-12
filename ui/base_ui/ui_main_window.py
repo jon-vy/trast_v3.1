@@ -68,14 +68,15 @@ class Ui_MainWindow(object):
         self.groupBox_4.setSizePolicy(sizePolicy1)
         self.verticalLayout = QVBoxLayout(self.groupBox_4)
         self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, -1, 0, -1)
         self.groupBox_2 = QGroupBox(self.groupBox_4)
         self.groupBox_2.setObjectName(u"groupBox_2")
         self.horizontalLayout = QHBoxLayout(self.groupBox_2)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.label = QLabel(self.groupBox_2)
-        self.label.setObjectName(u"label")
+        self.label_total_streams = QLabel(self.groupBox_2)
+        self.label_total_streams.setObjectName(u"label_total_streams")
 
-        self.horizontalLayout.addWidget(self.label)
+        self.horizontalLayout.addWidget(self.label_total_streams)
 
 
         self.verticalLayout.addWidget(self.groupBox_2)
@@ -84,10 +85,10 @@ class Ui_MainWindow(object):
         self.groupBox_3.setObjectName(u"groupBox_3")
         self.horizontalLayout_2 = QHBoxLayout(self.groupBox_3)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label_2 = QLabel(self.groupBox_3)
-        self.label_2.setObjectName(u"label_2")
+        self.label_recommended_streams = QLabel(self.groupBox_3)
+        self.label_recommended_streams.setObjectName(u"label_recommended_streams")
 
-        self.horizontalLayout_2.addWidget(self.label_2)
+        self.horizontalLayout_2.addWidget(self.label_recommended_streams)
 
 
         self.verticalLayout.addWidget(self.groupBox_3)
@@ -174,9 +175,9 @@ class Ui_MainWindow(object):
         self.btn_start.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0442\u0430\u0440\u0442", None))
         self.groupBox_4.setTitle("")
         self.groupBox_2.setTitle("")
-        self.label.setText(QCoreApplication.translate("MainWindow", u"\u0412\u0441\u0435\u0433\u043e \u043f\u043e\u0442\u043e\u043a\u043e\u0432: 0000", None))
+        self.label_total_streams.setText(QCoreApplication.translate("MainWindow", u"\u0412\u0441\u0435\u0433\u043e \u043f\u043e\u0442\u043e\u043a\u043e\u0432: 0000", None))
         self.groupBox_3.setTitle("")
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u"\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u043c\u043e\u0435 \u0447\u0438\u0441\u043b\u043e \u043f\u043e\u0442\u043e\u043a\u043e\u0432: 0000", None))
+        self.label_recommended_streams.setText(QCoreApplication.translate("MainWindow", u"\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u043c\u043e\u0435 \u0447\u0438\u0441\u043b\u043e \u043f\u043e\u0442\u043e\u043a\u043e\u0432: 0000", None))
         self.btn_stop.setText(QCoreApplication.translate("MainWindow", u"\u041e\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u0432\u0441\u0451", None))
         self.groupBox_5.setTitle("")
         self.label_links_processed.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0441\u044b\u043b\u043e\u043a \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043e: 0000", None))
