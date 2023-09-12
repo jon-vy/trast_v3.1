@@ -1,14 +1,8 @@
-import asyncio
-import data.variables
 import sqlite3
-# TODO: убрать лишние импорты
-import ui.progress_bar
 from PySide6.QtWidgets import QMainWindow, QDialog, QProgressBar, QToolTip, QWidget, QApplication
 from PySide6.QtCore import Slot, Signal, QObject, QThread, QRunnable, QThreadPool, QTime
 from PySide6.QtGui import QScreen
 import time
-import sys
-import random
 import logging
 
 logging.basicConfig(
