@@ -36,8 +36,6 @@ class Signals(QObject):
     # TODO: убрать лишнее из сигналов
     signal_started = Signal(int)
     signal_stop = Signal(str)
-    create_progress_bar = Signal(object)
-    # signal_progress_update = Signal(int)
     signal_progress_update = Signal(list)
 
 
@@ -46,6 +44,7 @@ class WorkerThread(QRunnable):
         super().__init__()
         self.index_thred = index_thred
         self.signals = Signals()
+        self.work_thread = True
 
     def run(self):
         # TODO: Сделать остановку потока
@@ -58,33 +57,37 @@ class WorkerThread(QRunnable):
                     break
                 else:
                     for stage in range(1, 4):
-                        data_work[2] = i
-                        data_work[3] = f"этап {stage}"
-                        self.signals.signal_progress_update.emit(data_work)
-                        delay = QTime(0, 0).msecsTo(QTime.currentTime())
-                        delay = abs(delay) % 10  # Ограничиваем задержку до 10 миллисекунд
-                        time.sleep(delay / 1000)  # Преобразуем задержку в секунды
+                        if self.work_thread == False:
+                            return
+                        else:
+                            data_work[2] = i
+                            data_work[3] = f"этап {stage}"
+                            self.signals.signal_progress_update.emit(data_work)
+                            delay = QTime(0, 0).msecsTo(QTime.currentTime())
+                            delay = abs(delay) % 10  # Ограничиваем задержку до 10 миллисекунд
+                            time.sleep(delay / 1000)  # Преобразуем задержку в секунды
+                        if self.work_thread == False:
+                            return
+
+    def stop(self):
+        self.work_thread = False
+        logging.info(f"сработала def stop {self.work_thread}")
+        # self.is_running = False
+        # QThreadPool.globalInstance().releaseThread()
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
         self.threadpool = QThreadPool.globalInstance()
-
-
-
-        try:
-            self.connect_sqlite3 = sqlite3.connect('database.db')
-            self.cursor_sqlite3 = self.connect_sqlite3.cursor()
-            self.cursor_sqlite3.execute("SELECT count_threds FROM date_users WHERE id = 1")
-            self.quantity_ProgressBar = self.cursor_sqlite3.fetchone()[0]
-            self.cursor_sqlite3.close()
-            self.connect_sqlite3.close()
-            self.ui.label_total_streams.setText(f"Всего потоков: {self.quantity_ProgressBar}")
-        except:
-            pass
+        self.connect_sqlite3 = sqlite3.connect('database.db')
+        self.cursor_sqlite3 = self.connect_sqlite3.cursor()
+        self.cursor_sqlite3.execute("SELECT count_threds FROM date_users WHERE id = 1")
+        self.quantity_ProgressBar = self.cursor_sqlite3.fetchone()[0]
+        self.cursor_sqlite3.close()
+        self.connect_sqlite3.close()
+        self.ui.label_total_streams.setText(f"Всего потоков: {self.quantity_ProgressBar}")
 
         self.screen = self.screen()
         self.Max_Thread_Count = self.threadpool.maxThreadCount()
@@ -93,48 +96,54 @@ class MainWindow(QMainWindow):
         self.ui.label_recommended_streams.setText(f"Рекомендуемое число потоков: {self.Max_Thread_Count}")
 
         self.height_window = self.height() + (self.Max_Thread_Count * 70)  # получить высоту под все виджеты
-        logging.info(f"нужна высота окна до проверки {self.height_window}")
 
         self.screen_height = self.screen.geometry().height()  # высота монитора
-        logging.info(f"высота монитора {self.screen_height}")
 
         if self.height_window < self.screen_height:
             pass
         else:
             self.height_window = self.screen_height - 100
-        logging.info(f"высота окна после проверки {self.height_window}")
         self.resize(self.width(), self.height_window)  # установить высоту окна
 
         # привязать к кнопкам слоты
         # TODO: сделать кнопку стоп всем потокам
         self.ui.btn_start.clicked.connect(self.start_jobs)
+        self.ui.btn_stop.clicked.connect(self.stop_jobs)
         self.ui.action_help.triggered.connect(self.show_help_window)
         self.ui.action_setting.triggered.connect(self.show_window_dialog_setting)
 
+    @Slot()
     def start_jobs(self):
         self.ui.btn_start.setEnabled(False)
         self.ui.btn_start.setToolTip("Нехуй сюда тыкать по 100 раз.\n Не видишь работаю")
-
-
-
         self.progress_bars = []
         self.threads = []
-        # TODO: исправить
         i = 0
         while i < self.Max_Thread_Count:
             i+=1
             self.progress_bar = ProgressBar()
-            # self.ui.verticalLayout_5.addWidget(self.progress_bar)
             self.ui.verticalLayout_scroll_area.addWidget(self.progress_bar)
             self.progress_bars.append(self.progress_bar)
             self.index_thred = len(self.progress_bars)
             self.thread_parser = WorkerThread(self.index_thred - 1)
             self.threadpool.start(self.thread_parser)
             self.threads.append(self.thread_parser)
-            logging.info(f"запущен поток {self.index_thred}")
             self.thread_parser.signals.signal_progress_update.connect(self.update_progress)
             # TODO: слушать стоп
         self.ui.btn_start.setEnabled(True)
+
+    @Slot()
+    def stop_jobs(self):
+        # logging.info(f"Нажата кнопка стоп")
+        for thread in self.threads:
+            thread.stop()
+            # logging.info(f"удалил поток")
+
+        for progress_bar in self.progress_bars:
+            progress_bar.deleteLater()
+
+
+
 
     @Slot()
     def update_progress(self, update):  # data_work = [self.index_thred, url, 0, "этап"]
