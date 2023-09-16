@@ -4,7 +4,7 @@ import json
 
 import sqlite3
 import logging
-
+# TODO: сделать общее открытие и закрытие базы
 logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s %(levelname)s %(message)s",
