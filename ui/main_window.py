@@ -1,7 +1,6 @@
 import sqlite3
-from PySide6.QtWidgets import QMainWindow, QDialog, QProgressBar, QToolTip, QWidget, QApplication
-from PySide6.QtCore import Slot, Signal, QObject, QThread, QRunnable, QThreadPool, QTime
-from PySide6.QtGui import QScreen
+from PySide6.QtWidgets import QMainWindow, QDialog
+from PySide6.QtCore import Slot, Signal, QObject, QRunnable, QThreadPool, QTime
 import time
 import logging
 from ui.base_ui.ui_main_window import Ui_MainWindow
@@ -17,7 +16,7 @@ logging.basicConfig(
         datefmt="%H:%M:%S",
         # datefmt="%Y-%m-%d %H:%M:%S",
         filename="basic.log",
-        filemode="w", # чистит файл при каждом запуске
+        filemode="w",  # чистит файл при каждом запуске
         encoding="utf-8"  # чтоб по русски писало
     )
 # logging.info(f"progress_bar удалён {name}")  Это вставить в нужное место
@@ -33,10 +32,8 @@ if len(url_list) > 0:
 else:
     print("ссылки закончились")
 
+
 class Signals(QObject):
-    # TODO: убрать лишнее из сигналов
-    signal_started = Signal(int)
-    signal_stop = Signal(str)
     signal_progress_update = Signal(list)
 
 
@@ -117,7 +114,7 @@ class MainWindow(QMainWindow):
         self.threads = []
         i = 0
         while i < self.quantity_thread:
-            i+=1
+            i += 1
             self.progress_bar = ProgressBar()
             self.ui.verticalLayout_scroll_area.addWidget(self.progress_bar)
             self.progress_bars.append(self.progress_bar)
