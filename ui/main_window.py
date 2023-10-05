@@ -22,9 +22,6 @@ logging.basicConfig(
 # logging.info(f"progress_bar удалён {name}")  Это вставить в нужное место
 
 
-
-
-
 with open('data/trustpilot.txt', 'r', encoding='utf-8') as f_read:
     url_list = f_read.read().split('\n')
 if len(url_list) > 0:

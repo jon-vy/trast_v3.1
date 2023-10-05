@@ -4,14 +4,13 @@ import sqlite3
 import logging
 from ui.base_ui.ui_window_dialog_setting import Ui_WindowDialogSetting
 from connect_db import db_connect
-# TODO: сделать общее открытие и закрытие базы
 logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s %(levelname)s %(message)s",
         datefmt="%H:%M:%S",
         # datefmt="%Y-%m-%d %H:%M:%S",
         filename="basic.log",
-        filemode="w", # чистит файл при каждом запуске
+        filemode="w",  # чистит файл при каждом запуске
         encoding="utf-8"  # чтоб по русски писало
     )
 # logging.info(f"progress_bar удалён {name}")  Это вставить в нужное место
