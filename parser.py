@@ -6,156 +6,163 @@ from bs4 import BeautifulSoup
 from user_agent import generate_user_agent
 import lxml
 import json
+from PySide6.QtCore import Slot, Signal, QObject
 from reviews import reviews_parser
 # from write_wp import write_in_wp
 import re
 
 
 
+class Signals(QObject):
+    signal_progress_update = Signal(list)
 
-def pars(url, connection):
-    url = f"{url.removesuffix('/location')}?languages=all"
-    headers = {
-        "User-Agent": generate_user_agent()
-    }
-    r = requests.get(url=url, headers=headers)
-    if r.status_code == 200:
-        pass
-    else:
-        print(f"{url} ничего не найдено {r.status_code}")
-        return
-    html_cod = r.text
-    soup = BeautifulSoup(html_cod, "lxml")
-    script_1 = soup.find("script", type="application/ld+json").text
-    script_2 = soup.find("script", type="application/json").text
-    js_1 = json.loads(script_1)
-    js_2 = json.loads(script_2)
+class Parser():
+    def __init__(self, url):
+        super().__init__()
+        self.url = f"{url.removesuffix('/location')}?languages=all"
+        self.headers = None
 
-    url_offer_logo = soup.find("img", class_="business-profile-image_image__jCBDc").attrs['src']
-    name_img = url.split('?')[0].split('/')[-1].replace('.', '_') + '.png'
-    img_logo = requests.get(url=url_offer_logo, headers=headers)
-    if img_logo.status_code == 200:
-        with open(f'data/logo/{name_img}', 'wb') as logo:
-            while True:
-                chunk = img_logo.content.read(1024)
-                if not chunk:
-                    break
-                logo.write(chunk)
-        offer_logo = True
-    else:
-        offer_logo = False
+    def pars(self):  #, connection
+        # url = f"{url.removesuffix('/location')}?languages=all"
+        # print(url)
+        self.headers = {
+            "User-Agent": generate_user_agent()
+        }
+        self.r = requests.get(url=self.url, headers=self.headers)
+        if self.r.status_code == 200:
+            pass
+        else:
+            # print(f"{url} ничего не найдено {r.status_code}")
+            return
+        self.html_cod = self.r.text
+        self.soup = BeautifulSoup(self.html_cod, "lxml")
+        self.script_1 = self.soup.find("script", type="application/ld+json").text
+        self.script_2 = self.soup.find("script", type="application/json").text
+        self.js_1 = json.loads(self.script_1)
+        self.js_2 = json.loads(self.script_2)
 
-    if offer_logo == False:
-        print(f"{url} без лого, пропускаю")
-        return
-    for i, offer_type in enumerate(js_1['@graph']):
-        if offer_type['@type'] == 'LocalBusiness':
-            index_LocalBusiness = i
-            break
+        self.url_offer_logo = self.soup.find("img", class_="business-profile-image_image__jCBDc").attrs['src']
+        self.name_img = self.url.split('?')[0].split('/')[-1].replace('.', '_') + '.png'
+        self.img_logo = requests.get(url=self.url_offer_logo, headers=self.headers)
+        if self.img_logo.status_code == 200:
+            with open(f'data/logo/{self.name_img}', 'wb') as self.logo:
+                for chunk in self.img_logo.iter_content(chunk_size=1024):
+                    self.logo.write(chunk)
+            self.offer_logo = True
+        else:
+            self.offer_logo = False
 
-    offer_name = js_1['@graph'][index_LocalBusiness]['name']
-    try:
-        offer_description = js_1['@graph'][index_LocalBusiness]['description']
-    except KeyError:
-        offer_description = "No description"
-    offer_url = js_1['@graph'][index_LocalBusiness]['sameAs']
+        if self.offer_logo == False:
+            print(f"{self.url} без лого, пропускаю")
+            return
+        for i, offer_type in enumerate(self.js_1['@graph']):
+            if offer_type['@type'] == 'LocalBusiness':
+                self.index_LocalBusiness = i
+                break
 
-    try:
-        offer_email = js_1['@graph'][index_LocalBusiness]['email']
-    except KeyError:
-        offer_email = "No email"
+        self.offer_name = self.js_1['@graph'][self.index_LocalBusiness]['name']
+        try:
+            offer_description = self.js_1['@graph'][self.index_LocalBusiness]['description']
+        except KeyError:
+            self.offer_description = "No description"
+        self.offer_url = self.js_1['@graph'][self.index_LocalBusiness]['sameAs']
 
-    try:
-        offer_address = js_1['@graph'][index_LocalBusiness]['address']
-    except KeyError:
-        offer_address = "No address"
+        try:
+            self.offer_email = self.js_1['@graph'][self.index_LocalBusiness]['email']
+        except KeyError:
+            self.offer_email = "No email"
 
-    if offer_email == "No email" and offer_address == "No address" and offer_description == "No description":
-        print(f"{url} Нет почты, адреса и описания. Пропускаю")
-        return
+        try:
+            self.offer_address = self.js_1['@graph'][self.index_LocalBusiness]['address']
+        except KeyError:
+            self.offer_address = "No address"
 
-    block_content = soup.find("div", class_="paper_paper__1PY90 paper_outline__lwsUX card_card__lQWDv card_noPadding__D8PcU styles_sideColumnCard__eyHWa")
+        if self.offer_email == "No email" and self.offer_address == "No address" and self.offer_description == "No description":
+            print(f"{self.url} Нет почты, адреса и описания. Пропускаю")
+            return
 
-    elements = block_content.findAll("div", class_="card_cardContent__sFUOe styles_cardContent__sQHcU")
-    find_element = re.compile('.*'.join(re.escape('Category')))
-    for element in elements:
-        if find_element.search(str(element)):
-            del_element_category = element
-    del_element_category.decompose()
-    try:
-        block_content.find("p", class_="typography_body-s__aY15Q typography_appearance-subtle__8_H2l styles_descriptionSubHeadline__opTat").decompose()
-    except:
-        pass
-    # block_Visit_this_website = soup.find("div", class_="styles_badgesWrapper__6VasU")
-    try:
-        offer_rating = js_1['@graph'][index_LocalBusiness]['aggregateRating']['ratingValue']
-    except:
-        offer_rating = soup.find("p", class_="typography_body-l__KUYFJ typography_appearance-subtle__8_H2l").text
-    # verified = soup.find("div", class_="typography_body-xs__FxlLP typography_appearance-default__AAY17 typography_weight-heavy__E1LTj styles_verificationIcon___X7KO").text
-    verified_company = js_2['props']['translations']['business-profile-page/header/business-information/verified-company']
-    if verified_company == 'VERIFIED COMPANY':
-        verified = 1
-    else:
-        verified = 0
+        self.block_content = self.soup.find("div", class_="paper_paper__1PY90 paper_outline__lwsUX card_card__lQWDv card_noPadding__D8PcU styles_sideColumnCard__eyHWa")
 
-    category_list = []
-    count_itemListElement = len(js_1['@graph'][4]['itemListElement'])
+        self.elements = self.block_content.findAll("div", class_="card_cardContent__sFUOe styles_cardContent__sQHcU")
+        self.find_element = re.compile('.*'.join(re.escape('Category')))
+        for element in self.elements:
+            if self.find_element.search(str(element)):
+                self.del_element_category = self.element
+        self.del_element_category.decompose()
+        try:
+            self.block_content.find("p", class_="typography_body-s__aY15Q typography_appearance-subtle__8_H2l styles_descriptionSubHeadline__opTat").decompose()
+        except:
+            pass
+        # block_Visit_this_website = soup.find("div", class_="styles_badgesWrapper__6VasU")
+        try:
+            self.offer_rating = self.js_1['@graph'][self.index_LocalBusiness]['aggregateRating']['ratingValue']
+        except:
+            self.offer_rating = self.soup.find("p", class_="typography_body-l__KUYFJ typography_appearance-subtle__8_H2l").text
+        # verified = soup.find("div", class_="typography_body-xs__FxlLP typography_appearance-default__AAY17 typography_weight-heavy__E1LTj styles_verificationIcon___X7KO").text
+        self.verified_company = self.js_2['props']['translations']['business-profile-page/header/business-information/verified-company']
+        if self.verified_company == 'VERIFIED COMPANY':
+            self.verified = 1
+        else:
+            self.verified = 0
 
-    for i in range(1, count_itemListElement - 1):
-        category_list.append(js_1['@graph'][4]['itemListElement'][i]['name'])
+        self.category_list = []
+        self.count_itemListElement = len(self.js_1['@graph'][4]['itemListElement'])
 
-    reviews_list = []
-    parser_reviews_stop = random.randint(100, 230)
-    # print(f"коментов {parser_reviews_stop}")
-    script_reviews = soup.find("script", id="__NEXT_DATA__").text
-    js_reviews = json.loads(script_reviews)
-    numberOfReviews = js_reviews['props']['pageProps']['businessUnit']['numberOfReviews']
-    reviews = js_reviews['props']['pageProps']['reviews']
-    reviews_parser(reviews, reviews_list, numberOfReviews, parser_reviews_stop)
-    if numberOfReviews > 20:
-        page = 2
-        flag = True
+        for i in range(1, self.count_itemListElement - 1):
+            self.category_list.append(self.js_1['@graph'][4]['itemListElement'][i]['name'])
 
-        while flag == True:
-            url_review = f"{url}&page={page}"
-            r = requests.get(url=url_review)
-            if r.status_code == 200:
-                html_cod = r.text
-                soup = BeautifulSoup(html_cod, "lxml")
-                script_reviews = soup.find("script", id="__NEXT_DATA__").text
-                js_reviews = json.loads(script_reviews)
-                reviews = js_reviews['props']['pageProps']['reviews']
-                page += 1
-                flag = reviews_parser(reviews, reviews_list, numberOfReviews, parser_reviews_stop)
-            else:
-                print(f"ошибка запроса{r.status_code}. Пауза 5 сек.")
-                time.sleep(5)
+        self.reviews_list = []
+        self.parser_reviews_stop = random.randint(100, 230)
+        # print(f"коментов {parser_reviews_stop}")
+        self.script_reviews = self.soup.find("script", id="__NEXT_DATA__").text
+        self.js_reviews = json.loads(self.script_reviews)
+        self.numberOfReviews = self.js_reviews['props']['pageProps']['businessUnit']['numberOfReviews']
+        self.reviews = self.js_reviews['props']['pageProps']['reviews']
+        self.reviews_parser(self.reviews, rself.eviews_list, self.numberOfReviews, self.parser_reviews_stop)
+        if self.numberOfReviews > 20:
+            self.page = 2
+            self.flag = True
 
-    else:
-        url_review = f"{url}&page=1"
+            while self.flag == True:
+                self.url_review = f"{self.url}&page={self.page}"
+                self.r = requests.get(url=self.url_review)
+                if self.r.status_code == 200:
+                    self.html_cod = self.r.text
+                    self.soup = BeautifulSoup(self.html_cod, "lxml")
+                    self.script_reviews = self.soup.find("script", id="__NEXT_DATA__").text
+                    self.js_reviews = json.loads(self.script_reviews)
+                    self.reviews = self.js_reviews['props']['pageProps']['reviews']
+                    self.page += 1
+                    self.flag = self.reviews_parser(self.reviews, self.reviews_list, self.numberOfReviews, self.parser_reviews_stop)
+                else:
+                    print(f"ошибка запроса{self.r.status_code}. Пауза 5 сек.")
+                    time.sleep(5)
+
+        else:
+            url_review = f"{self.url}&page=1"
 
 
-    dict_content = {
-        'block_content': str(block_content),
-        # 'block_Visit_this_website': str(block_Visit_this_website),
-        'offer_name': offer_name,
-        'verified': verified,
-        'offer_description': offer_description,
-        'offer_url': offer_url,
-        'offer_logo': offer_logo,
-        'offer_email': offer_email,
-        'offer_address': offer_address,
-        'offer_rating': offer_rating,
-        'category_list': category_list,
-        'reviews_list': reviews_list
-    }
-    with open('dict_content.json', 'w') as f:
-        json.dump(dict_content, f)
-    # print('1')
+        self.dict_content = {
+            'block_content': str(self.block_content),
+            # 'block_Visit_this_website': str(block_Visit_this_website),
+            'offer_name': self.offer_name,
+            'verified': self.verified,
+            'offer_description': self.offer_description,
+            'offer_url': self.offer_url,
+            'offer_logo': self.offer_logo,
+            'offer_email': self.offer_email,
+            'offer_address': self.offer_address,
+            'offer_rating': self.offer_rating,
+            'category_list': self.category_list,
+            'reviews_list': self.reviews_list
+        }
+        with open('dict_content.json', 'w') as f:
+            json.dump(self.dict_content, f)
+        # print('1')
 
-    print(f"{url} спарсил")
-    write_in_wp(dict_content, connection)
-    print(f"{url} записал в wp")
+        print(f"{self.url} спарсил")
+        # write_in_wp(dict_content, connection)
+        print(f"{self.url} записал в wp")
 
 
 

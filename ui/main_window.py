@@ -7,7 +7,7 @@ from ui.base_ui.ui_main_window import Ui_MainWindow
 from ui.base_ui.ui_help_window import Ui_HelpWindow
 from ui.window_dialog_setting import WindowDialogSetting
 from ui.progress_bar import ProgressBar
-# from parser import *
+from parser import *
 # from data.variables import *
 
 logging.basicConfig(
@@ -30,14 +30,15 @@ else:
     print("ссылки закончились")
 
 
-class Signals(QObject):
-    signal_progress_update = Signal(list)
+# class Signals(QObject):
+#     signal_progress_update = Signal(list)
 
 
 class WorkerThread(QRunnable):
     def __init__(self, index_thred):
         super().__init__()
         self.index_thred = index_thred
+
         self.signals = Signals()
         self.work_thread = True
 
@@ -45,23 +46,25 @@ class WorkerThread(QRunnable):
         # TODO: Прикрутить сюда парсер
         for url in url_list:
             url_list.remove(url)
-            data_work = [self.index_thred, url, 0, "этап"]
-            for i in range(100):
-                if i == 100:
-                    break
-                else:
-                    for stage in range(1, 4):
-                        if self.work_thread == False:
-                            return
-                        else:
-                            data_work[2] = i
-                            data_work[3] = f"этап {stage}"
-                            self.signals.signal_progress_update.emit(data_work)
-                            delay = QTime(0, 0).msecsTo(QTime.currentTime())
-                            delay = abs(delay) % 10  # Ограничиваем задержку до 10 миллисекунд
-                            time.sleep(delay / 1000)  # Преобразуем задержку в секунды
-                        if self.work_thread == False:
-                            return
+            self.parser = Parser(url)
+            self.parser.pars()
+        #     data_work = [self.index_thred, url, 0, "этап"]
+        #     for i in range(100):
+        #         if i == 100:
+        #             break
+        #         else:
+        #             for stage in range(1, 4):
+        #                 if self.work_thread == False:
+        #                     return
+        #                 else:
+        #                     data_work[2] = i
+        #                     data_work[3] = f"этап {stage}"
+        #                     self.signals.signal_progress_update.emit(data_work)
+        #                     delay = QTime(0, 0).msecsTo(QTime.currentTime())
+        #                     delay = abs(delay) % 10  # Ограничиваем задержку до 10 миллисекунд
+        #                     time.sleep(delay / 1000)  # Преобразуем задержку в секунды
+        #                 if self.work_thread == False:
+        #                     return
 
     def stop(self):
         self.work_thread = False
